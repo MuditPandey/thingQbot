@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<!--
+Copyright (c) 2017, STEREOLABS.
+
+All rights reserved.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<launch>
+    <arg name="base_frame"	default="zed_center" />
+    <!-- Start turtlebot bringup -->
+    <include file="$(find turtlebot_bringup)/launch/minimal.launch" />		
+    <!-- Odometry coordinate frame -->
+    <arg name="odometry_frame"       default="zed_odom" />
+    <arg name="camera_model"          default="0" /> <!-- 0=ZED, 1=ZEDM-->
+    <arg name="serial_number"           default="0" /> 
+
+    <group ns="zed">
+        <include file="$(find zed_wrapper)/launch/zed_camera.launch">
+            <!-- compliant mode for rviz -->
+            <arg name="odometry_frame"        value="$(arg odometry_frame)" />
+            <arg name="camera_model"        value="$(arg camera_model)" />
+            <arg name="serial_number"           default="$(arg serial_number)" /> 
+        </include>
+    </group>
+     <!-- STart the depthimage_to_laserscan node -->
+    <node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="depthimage_to_laserscan">
+        <remap from="image" to="/zed/depth/depth_registered" />
+	<param name="output_frame_id" value="zed_center" />
+    </node> 
+    <!-- STart the gmapping node 
+    <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
+	<param name="odom_frame" value="zed_odom" />
+	<param name="base_frame" value="zed_center" />
+    </node> -->
+    <include file="$(find turtlebot_navigation)/launch/includes/gmapping/gmapping.launch.xml">
+        <arg name="base_frame" value="zed_center"/>
+        <arg name="odom_frame" value="zed_odom"/>
+        <arg name="xmin"       value="-10.0"/>
+        <arg name="ymin"       value="-10.0"/>
+        <arg name="xmax"       value="10.0"/>
+        <arg name="ymax"       value="10.0"/>
+    </include>
+    <!--AMCL start
+    <arg name="initial_pose_x" default="0.0"/> 
+    <arg name="initial_pose_y" default="0.0"/> 
+    <arg name="initial_pose_a" default="0.0"/>
+    <include file="$(find turtlebot_navigation)/launch/includes/amcl/amcl.launch.xml">
+        <arg name="odom_frame_id"  value="zed_odom" />
+        <arg name="base_frame_id"  value="zed_center"/>
+        <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
+        <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
+        <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
+    </include>-->
+    <!--Move base
+    <include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml">
+        <arg name="odom_frame_id"   value="zed_odom"/>
+        <arg name="base_frame_id"   value="zed_center"/>
+        <arg name="global_frame_id" value="map"/>
+        <arg name="odom_topic"      value="/zed/odom" />
+        <arg name="laser_topic" default="scan" />
+  </include>-->
+
+  
+</launch>
